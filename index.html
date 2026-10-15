@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inox Decor — Kitchen Accessories in 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--fg:#1b1c1e;--mut:#6d6a63;--acc:#9a5522;--line:#1b1c1e26;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{margin:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#e9e4dc;color:var(--fg);font-family:Manrope,system-ui,sans-serif;font-weight:300}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:3}
+.logo{letter-spacing:.38em;font-weight:500;font-size:13px}.logo i{font-style:normal;color:var(--acc)}
+nav{display:flex;gap:2px;pointer-events:auto}
+nav button{background:none;border:0;color:var(--mut);font:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:8px 9px;cursor:pointer;position:relative}
+nav button.on{color:var(--fg)}nav button.on:after{content:"";position:absolute;left:9px;right:9px;bottom:2px;height:1px;background:var(--acc)}
+#panel{position:fixed;left:28px;bottom:calc(46px + env(safe-area-inset-bottom,0px));max-width:470px;z-index:2;animation:in .9s both}
+@keyframes in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.k{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--acc);margin-bottom:14px}
+h1{font-weight:200;font-size:clamp(32px,5.2vw,62px);line-height:1.04;letter-spacing:-.02em}
+p{color:var(--mut);margin-top:16px;line-height:1.7;font-size:15px;max-width:400px}
+.row{display:flex;gap:28px;margin-top:22px}.row b{display:block;font-weight:200;font-size:30px}.row span{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.btn{display:inline-block;margin-top:24px;padding:14px 26px;border:1px solid var(--line);border-radius:99px;color:var(--fg);background:#ffffff66;font:inherit;font-size:11px;letter-spacing:.24em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:.3s}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.sws{display:flex;gap:12px;margin-top:22px}.sw{width:34px;height:34px;border-radius:50%;border:1px solid #0003;cursor:pointer;transition:.3s}.sw.on{box-shadow:0 0 0 3px #e9e4dc,0 0 0 4px var(--acc)}
+#chips{position:fixed;right:28px;bottom:calc(46px + env(safe-area-inset-bottom,0px));display:none;flex-direction:column;align-items:flex-end;z-index:2}
+#chips.show{display:flex}
+#chips button{background:none;border:0;color:var(--mut);font:inherit;font-size:12px;letter-spacing:.12em;padding:5px 0;cursor:pointer;display:flex;gap:12px;align-items:center}
+#chips button:after{content:"";width:16px;height:1px;background:var(--mut);transition:.3s}
+#chips button.on{color:var(--fg)}#chips button.on:after{width:42px;background:var(--acc)}
+.hs{position:fixed;left:0;top:0;z-index:1;width:34px;height:34px;border-radius:50%;background:#8a4b17;color:#fff;border:2px solid #fff9;font:500 13px Manrope,sans-serif;cursor:pointer;box-shadow:0 4px 14px #0004;transition:background .3s}
+.hs:before{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid #8a4b17;opacity:0;animation:pl 2s infinite}.hs.on{background:#1b1c1e}.hs.on:before{opacity:.7}
+@keyframes pl{0%{transform:scale(.7);opacity:.8}100%{transform:scale(1.4);opacity:0}}
+#hint{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));text-align:center;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#8d8a82;pointer-events:none}
+@media(max-width:760px){header{padding:14px 8px}.logo{display:none}nav{width:100%;justify-content:space-between}nav button{padding:8px 3px;font-size:8.5px;letter-spacing:.06em}
+#panel{left:18px;right:18px;bottom:calc(120px + env(safe-area-inset-bottom,0px))}#chips{left:18px;right:18px;bottom:calc(34px + env(safe-area-inset-bottom,0px));flex-direction:row;flex-wrap:wrap;gap:2px 12px;align-items:flex-start}
+#chips button:after{display:none}#chips button{font-size:10px;padding:3px 0}p{font-size:14px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<header><div class="logo">INOX<i>DECOR</i></div><nav id="nav"></nav></header>
+<div id="hsw"></div><div id="panel"></div><div id="chips"></div>
+<div id="hint">Scroll · Click · Move</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),V=(...a)=>new THREE.Vector3(...a);
+const R=new THREE.WebGLRenderer({canvas:$('#c'),antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
+const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(40,1,.1,120);
+const mc=(w,h,f)=>{const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);return c};
+// soft light gradient backdrop + studio env
+const bg=new THREE.CanvasTexture(mc(4,256,(g,w,h)=>{const r=g.createLinearGradient(0,0,0,h);r.addColorStop(0,'#f7f4ee');r.addColorStop(.6,'#e6e1d8');r.addColorStop(1,'#cfc9be');g.fillStyle=r;g.fillRect(0,0,w,h)}));
+S.background=bg;S.fog=new THREE.Fog(0xe4dfd6,16,55);
+const et=new THREE.CanvasTexture(mc(1024,512,(g,w,h)=>{const r=g.createLinearGradient(0,0,0,h);r.addColorStop(0,'#ffffff');r.addColorStop(.5,'#cfcac1');r.addColorStop(1,'#6e6a63');g.fillStyle=r;g.fillRect(0,0,w,h);g.fillStyle='#fff';[[80,60,200,40],[420,40,260,34],[780,80,160,50],[250,180,90,18]].forEach(a=>g.fillRect(...a));g.fillStyle='#4a4741';g.fillRect(560,190,90,30)}));
+et.mapping=THREE.EquirectangularReflectionMapping;S.environment=new THREE.PMREMGenerator(R).fromEquirectangular(et).texture;
+S.add(new THREE.HemisphereLight(0xffffff,0xb8b1a4,.8));
+const key=new THREE.PointLight(0xfff3e2,1.2,22,1.4);S.add(key);
+
+const M=(c,m=.1,r=.5)=>new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r});
+const steel=M(0xd5d9de,1,.24),dark=M(0x26282c,.4,.5),stone=M(0xdbd5ca,.05,.7),top=M(0xefe9de,.05,.3),wallM=M(0xf1ede5,0,.9),marble=M(0xe3dacb,.1,.35),fac=M(0xe6dfd0,.15,.42),wood=M(0x9a6b3f,0,.6);
+const warm=new THREE.MeshBasicMaterial({color:0xffe2b0});
+const box=(w,h,d,m,x,y,z,p)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);p&&p.add(o);return o};
+const cyl=(r,h,m,x,y,z,p,s=40)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,s),m);o.position.set(x,y,z);p&&p.add(o);return o};
+const rod=(a,b,p,r=.008)=>{a=V(...a);b=V(...b);const d=b.clone().sub(a),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),6),steel);o.position.copy(a).add(b).multiplyScalar(.5);o.quaternion.setFromUnitVectors(V(0,1,0),d.normalize());p.add(o)};
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(400,70),M(0xe0dacf,.05,.45));fl.rotation.x=-Math.PI/2;S.add(fl);
+
+// ===== HOME + FACADE WALL =====
+box(14,7,.1,wallM,0,3.5,-.7,S);
+const K=new THREE.Group();S.add(K);
+box(5.7,3.7,.1,stone,0,1.85,-.5,K);[-2.82,2.82].forEach(x=>box(.06,3.7,1.05,stone,x,1.85,0,K));box(5.7,.06,1.05,stone,0,3.7,0,K);box(5.7,.1,1,dark,0,.05,-.02,K);
+const edges=[];
+[-1.88,0,1.88].forEach(x=>{box(1.8,2.5,.04,fac,x,2.4,.52,K);box(1.8,.018,.05,dark,x,1.17,.54,K)});
+const drawer=(x,open)=>{const D=new THREE.Group();D.position.x=x;K.add(D);
+ const f=box(1.8,.86,.04,fac,0,.6,.52,D);box(1.8,.018,.05,dark,0,1.02,.54,D);
+ box(1.6,.03,.95,steel,0,.25,.04,D);[-.8,.8].forEach(s=>box(.03,.5,.95,steel,s,.5,.04,D));box(1.6,.5,.03,steel,0,.5,-.43,D);
+ for(let i=0;i<5;i++)cyl(.045,.34,steel,-.55+i*.27,.43,-.2,D,24);box(.5,.06,.3,dark,.4,.3,.25,D);cyl(.16,.03,steel,-.35,.3,.28,D);
+ if(open){const l=new THREE.LineSegments(new THREE.EdgesGeometry(f.geometry),new THREE.LineBasicMaterial({color:0x9a5522,transparent:true,opacity:0}));f.add(l);edges.push(l)}return D};
+drawer(-1.88);drawer(1.88);const D=drawer(0,true);
+const hit=box(5.6,3.6,.1,new THREE.MeshBasicMaterial({visible:false}),0,1.8,.6,K);
+
+// ===== EXPLORE KITCHEN (L-shape) =====
+const KX=22,KT=new THREE.Group();KT.position.x=KX;S.add(KT);
+box(11,5,.1,wallM,1.5,2.5,-1.1,KT);box(6.9,1,.02,marble,.65,1.5,-1.0,KT);
+box(6.7,.84,.66,stone,.65,.52,-.66,KT);box(6.9,.04,.8,top,.65,.96,-.62,KT);
+box(.66,.84,2.9,stone,-2.35,.52,1.15,KT);box(.8,.04,3,top,-2.35,.96,1.2,KT);
+box(7.2,.1,.8,dark,.8,.05,-.6,KT);
+const bh=(w,x,y,z,ax)=>ax?box(.03,.015,w,dark,x+.02,y,z,KT):box(w,.015,.03,dark,x,y,z+.02,KT);
+[[-2.7,-1.7],[-1.7,-.7],[2.5,4]].forEach(([a,b])=>{const w=b-a-.02,c=(a+b)/2;box(w,.8,.03,fac,c,.55,-.3,KT);bh(w,c,.93,-.3)});
+[[-.7,1.3],[1.3,2.5]].forEach(([a,b])=>{const w=b-a-.02,c=(a+b)/2;box(w,.36,.03,fac,c,.75,-.3,KT);box(w,.42,.03,fac,c,.31,-.3,KT);bh(w,c,.92,-.3);bh(w,c,.52,-.3)});
+[[-.3,1.1,1],[1.1,1.85,0],[1.85,2.6,0]].forEach(([a,b,two])=>{const w=b-a-.02,c=(a+b)/2;
+ if(two){box(.03,.36,w,fac,-2.0,.75,c,KT);box(.03,.42,w,fac,-2.0,.31,c,KT);bh(w,-2.0,.92,c,1);bh(w,-2.0,.52,c,1)}else{box(.03,.8,w,fac,-2.0,.55,c,KT);bh(w,-2.0,.93,c,1)}});
+box(1.3,3.2,.7,stone,4.65,1.6,-.65,KT);[4.33,4.97].forEach(x=>box(.62,3.1,.03,fac,x,1.62,-.3,KT));
+box(5.1,1.2,.4,stone,1.35,2.6,-.8,KT);for(let i=0;i<5;i++)box(1,1.16,.03,fac,1.35+(i-2)*1.02,2.6,-.58,KT);
+box(.9,.14,.5,dark,.3,1.92,-.75,KT);box(.7,.02,.45,dark,.3,.99,-.65,KT);
+box(5,.012,.03,warm,1.35,1.99,-.6,KT);const kl=new THREE.PointLight(0xffd9a0,1,5);kl.position.set(1.3,1.8,-.3);KT.add(kl);
+cyl(.035,.3,dark,.9,1.12,-.8,KT);cyl(.035,.28,dark,1.0,1.11,-.8,KT);box(.4,.03,.28,wood,-.6,1.0,-.75,KT);
+const pl=new THREE.Mesh(new THREE.SphereGeometry(.2,20,20),M(0x5f7a55,0,.8));pl.position.set(-2.3,1.2,.5);KT.add(pl);cyl(.09,.2,stone,-2.3,1.06,.5,KT);
+const HS=[
+ {n:'Silent Drawer System',d:'Soft-close telescopic channels give every drawer a quiet, full-extension glide.',p:[-1.96,.75,.4],n3:[1,0,0]},
+ {n:'Deep Utility Drawer',d:'Heavy-duty slides carrying pots, pans and stainless organizer inserts.',p:[-1.96,.31,.4],n3:[1,0,0]},
+ {n:'Hinges & Telescopic',d:'Soft-close stainless hinges and telescopic systems behind every door.',p:[-1.96,.55,1.5],n3:[1,0,0]},
+ {n:'Magic Corner Unit',d:'Stainless carousel units that bring the blind corner into reach.',p:[-2.2,.55,-.26],n3:[0,0,1]},
+ {n:'Cabinet Hardware',d:'Handles, profiles, knobs and everyday fittings in satin finishes.',p:[-1.2,.55,-.26],n3:[0,0,1]},
+ {n:'Cutlery & Cooking Drawers',d:'Stainless cutlery trays and modular partitions beside the hob.',p:[.3,.75,-.26],n3:[0,0,1]},
+ {n:'Steel Basket Systems',d:'Pull-out stainless baskets and cabinet organizers.',p:[3.25,.55,-.26],n3:[0,0,1]},
+ {n:'Tall Units & Wardrobe Fittings',d:'Pantry pull-outs, wardrobe fittings and sliding systems for full-height storage.',p:[4.65,1.7,-.26],n3:[0,0,1]},
+ {n:'Overhead Organizers',d:'Lift-up fittings and aluminium-profile doors for wall units.',p:[2.4,2.6,-.54],n3:[0,0,1]}];
+const hsw=$('#hsw');HS.forEach((h,i)=>{const b=document.createElement('button');b.className='hs';b.textContent=i+1;b.onclick=()=>{sec=2;pi=i;ui()};hsw.appendChild(b);h.el=b});
+
+// ===== CATEGORIES RING =====
+const CX=44,CATS=[
+ ['Wardrobe Fittings','Pull-outs, rails and organizers that make wardrobes work harder.'],
+ ['Sliding Systems','Smooth sliding-door fittings for wardrobes and partitions.'],
+ ['Silent Drawer Systems','Soft-close, full-extension drawer runners.'],
+ ['Satin X Series','Our satin-finish hardware collection.'],
+ ['Modular Kitchen','Complete kitchen solutions, fitted to your space.'],
+ ['Rolling Shutters','Roll-up shutters for appliance garages and storage.'],
+ ['Cabinet Hardware','Handles, knobs and essential cabinet fittings.'],
+ ['Overhead Organizers','Lift-up and overhead storage mechanisms.'],
+ ['Hinges & Telescopic','Stainless hinges and telescopic channels.'],
+ ['Aluminium Carcass Kitchen','Moisture-proof aluminium carcass and door systems.'],
+ ['Architectural Fittings','Premium fittings for doors, glass and interiors.']];
+const RG=new THREE.Group();RG.position.x=CX;S.add(RG);const N=CATS.length;
+CATS.forEach((c,i)=>{const t=new THREE.CanvasTexture(mc(300,380,(g)=>{g.fillStyle='#efebe4';g.fillRect(0,0,300,380);g.strokeStyle='#bdb7ab';g.strokeRect(14,14,272,352);g.fillStyle='#9a5522';g.font='200 64px Manrope,sans-serif';g.fillText(String(i+1).padStart(2,'0'),30,100);
+ g.fillStyle='#1b1c1e';g.font='300 31px Manrope,sans-serif';let l='',y=250;c[0].split(' ').forEach(w=>{if(g.measureText(l+w).width>230){g.fillText(l,30,y);y+=40;l=''}l+=w+' '});g.fillText(l,30,y)}));
+ const o=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.9,.06),[steel,steel,steel,steel,M(0xffffff,.15,.4),steel].map((m,k)=>{if(k==4){m.map=t}return m}));
+ const th=i/N*Math.PI*2;o.position.set(Math.sin(th)*3.5,1.5,Math.cos(th)*3.5);o.rotation.y=th;o.userData.i=i;RG.add(o)});
+cyl(.06,3,steel,0,1.5,0,RG);cyl(1.3,.04,steel,0,.05,0,RG,64);cyl(1.3,.04,steel,0,2.95,0,RG,64);
+
+// ===== PRODUCTS =====
+const PX=i=>60+i*3.3;
+const prods=[
+ {n:'Magic Corner Unit',d:'Universal and 4-shelf stainless steel corner carousels that reclaim every blind corner.',b(p){cyl(.035,1.45,steel,0,.75,0,p);[.2,.55,.9,1.25].forEach(y=>{cyl(.52,.025,steel,0,y,0,p,64);const t=new THREE.Mesh(new THREE.TorusGeometry(.52,.012,8,64),steel);t.rotation.x=Math.PI/2;t.position.y=y+.03;p.add(t)})}},
+ {n:'Stainless Steel Baskets',d:'Polished stainless baskets and cabinet organizers, built for daily load.',b(p){p.position.y=.1;
+  for(let i=0;i<7;i++){const x=-.45+i*.15;rod([x,0,-.3],[x,0,.3],p)}for(let j=0;j<5;j++){const z=-.3+j*.15;rod([-.45,0,z],[.45,0,z],p)}
+  [[-.45,-.3],[.45,-.3],[.45,.3],[-.45,.3]].forEach(([x,z])=>rod([x,0,z],[x,.38,z],p,.012));
+  [0,.19,.38].forEach(y=>{rod([-.45,y,-.3],[.45,y,-.3],p);rod([-.45,y,.3],[.45,y,.3],p);rod([-.45,y,-.3],[-.45,y,.3],p);rod([.45,y,-.3],[.45,y,.3],p)})}},
+ {n:'Hinges & Slides',d:'Stainless steel hinge and slide series, plus sliding-door fittings.',b(p){const h=new THREE.Group();p.add(h);h.position.y=.85;
+  cyl(.17,.07,steel,-.3,0,0,h);box(.55,.03,.12,steel,.05,.02,0,h);box(.3,.04,.2,steel,.4,0,0,h);cyl(.05,.2,steel,.15,.04,0,h,24).rotation.x=Math.PI/2;
+  const s=new THREE.Group();p.add(s);s.position.y=.35;box(1.2,.04,.06,steel,0,0,0,s);box(.9,.04,.06,steel,.15,.05,.06,s);[-.3,0,.3,.6].forEach(x=>cyl(.015,.05,dark,x,.025,.03,s,12))}},
+ {n:'Aluminium Cabinets & Doors',d:'Aluminium profile cabinets and doors for fully-loaded modern kitchens.',b(p){const y=.95;
+  box(.84,.04,.05,steel,0,y+.6,0,p);box(.84,.04,.05,steel,0,y-.6,0,p);box(.04,1.24,.05,steel,-.4,y,0,p);box(.04,1.24,.05,steel,.4,y,0,p);
+  box(.76,1.16,.01,new THREE.MeshStandardMaterial({color:0x8fb7c9,transparent:true,opacity:.35,metalness:.2,roughness:.05}),0,y,0,p);box(.02,.5,.04,steel,.3,y,.04,p)}},
+ {n:'Cabinet Lighting',d:'Slim, warm light lines that finish every shelf, niche and corner.',b(p){box(1.2,.04,.07,steel,0,1.35,0,p);box(1.14,.01,.045,warm,0,1.325,0,p);
+  const c=new THREE.Mesh(new THREE.CylinderGeometry(.6,.05,.95,32,1,true),new THREE.MeshBasicMaterial({color:0xffc880,transparent:true,opacity:.1,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false}));c.scale.z=.3;c.position.y=.85;p.add(c);
+  const l=new THREE.PointLight(0xffd9a0,.9,4);l.position.set(0,1.1,.3);p.add(l)}}];
+const PG=prods.map((pr,i)=>{const G=new THREE.Group();G.position.set(PX(i),0,0);S.add(G);cyl(.75,.5,M(0xf4f0e9,.05,.5),0,.25,0,G,64);cyl(.76,.02,steel,0,.5,0,G,64);
+ const sp=new THREE.Group();sp.position.y=.52;G.add(sp);pr.b(sp);G.userData={i,sp};return G});
+
+// ===== ABOUT + CONTACT =====
+const AX=84,AB=new THREE.Group();AB.position.set(AX,1.45,0);S.add(AB);
+const rings=[1.05,.82,.6].map(r=>{const t=new THREE.Mesh(new THREE.TorusGeometry(r,.03,24,128),steel);AB.add(t);return t});AB.add(new THREE.Mesh(new THREE.SphereGeometry(.1,24,24),warm));
+const TX=96,CT=new THREE.Group();CT.position.set(TX,0,0);S.add(CT);
+box(1.5,.08,.1,steel,0,2.7,0,CT);[-.7,.7].forEach(x=>box(.08,2.7,.1,steel,x,1.35,0,CT));box(1.32,2.62,.02,warm,0,1.31,-.15,CT);
+const leaf=new THREE.Group();leaf.position.set(-.66,0,0);CT.add(leaf);box(1.28,2.6,.05,fac,.64,1.3,0,leaf);box(.02,.5,.07,dark,1.15,1.3,.04,leaf);
+const cl=new THREE.PointLight(0xffd9a0,2,9);cl.position.set(0,1.4,1.2);CT.add(cl);
+
+// ===== UI =====
+const names=['Home','Facade','Kitchen','Range','Products','About','Contact'];
+const SW=[[0xe6dfd0,'Ivory'],[0xbfc6bd,'Sage'],[0x8d6a4f,'Walnut'],[0x34373d,'Graphite'],[0xc9b9a0,'Sand']];
+let sec=0,pi=-1,lock=0;
+const nav=$('#nav'),chips=$('#chips'),panel=$('#panel');
+names.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>go(i);nav.appendChild(b)});
+const TEL='tel:+918043848491';
+function content(){
+ if(sec===0)return{k:'Inox Decor · New Delhi · Since 2000',h:'Kitchens,<br>engineered in steel.',p:'Manufacturer and wholesaler of kitchen accessories, stainless steel hinges and cabinet hardware.',b:'Open the drawer'};
+ if(sec===1)return{k:'Facade · Satin X Series',h:'Choose your<br>finish.',p:'The drawer opens, the facade glows. Pick a finish and the whole kitchen follows.',sw:1,b:'Explore the kitchen'};
+ if(sec===2)return pi<0?{k:'Explore',h:'Tap the<br>numbers.',p:'Nine fittings hidden inside one modern kitchen.',b:'Start with 01',f:()=>{pi=0;ui()}}:{k:`0${pi+1} / 09`,h:HS[pi].n,p:HS[pi].d,b:'Next fitting',f:()=>{pi=(pi+1)%9;ui()}};
+ if(sec===3)return{k:`${String(pi+1).padStart(2,'0')} / 11 · Featured Categories`,h:CATS[pi][0],p:CATS[pi][1],b:'Enquire',href:TEL};
+ if(sec===4)return pi<0?{k:'Products',h:'Five systems.<br>One standard.',p:'Select an object — or click it in the scene.',b:'View first',f:()=>{pi=0;ui()}}:{k:`0${pi+1} / 05`,h:prods[pi].n,p:prods[pi].d,b:'Enquire',href:TEL};
+ if(sec===5)return{k:'About Inox Decor',h:'Twenty-five years<br>of hardware.',p:'Established in 2000 in New Delhi, Inox Decor is a manufacturer and wholesale trader of stainless steel hinges, kitchen hardware and aluminium cabinetry for kitchens, wardrobes and architectural interiors.',row:[['2000','Established'],['11','Categories'],['26–50','Team']],b:'Get in touch'};
+ return{k:'Contact',h:'Step into<br>your kitchen.',p:'B-1 1/2, Main Najafgarh Road, Janakpuri, New Delhi 110058<br>Mon – Sat · 9 AM – 7 PM',b:'Call +91 80438 48491',href:TEL}}
+function ui(){
+ [...nav.children].forEach((b,i)=>b.classList.toggle('on',i===sec));
+ const list=sec===3?CATS.map(c=>c[0]):sec===4?prods.map(p=>p.n):[];
+ chips.innerHTML='';chips.classList.toggle('show',list.length>0);
+ list.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.className=pi===i?'on':'';b.onclick=()=>{pi=(sec===4&&pi===i)?-1:i;ui()};chips.appendChild(b)});
+ HS.forEach((h,i)=>h.el.classList.toggle('on',sec===2&&pi===i));
+ const s=content();panel.style.animation='none';panel.offsetHeight;panel.style.animation='';
+ panel.innerHTML=`<div class="k">${s.k}</div><h1>${s.h}</h1><p>${s.p}</p>${s.row?`<div class="row">${s.row.map(r=>`<div><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')}</div>`:''}${s.sw?`<div class="sws">${SW.map(w=>`<button class="sw" title="${w[1]}" data-c="${w[0]}" style="background:#${w[0].toString(16).padStart(6,'0')}"></button>`).join('')}</div>`:''}${s.href?`<a class="btn" href="${s.href}">${s.b}</a>`:`<button class="btn" id="cta">${s.b}</button>`}`;
+ panel.querySelectorAll('.sw').forEach(b=>{if(+b.dataset.c===fac.color.getHex())b.classList.add('on');b.onclick=()=>{fac.color.setHex(+b.dataset.c);panel.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b))}});
+ const c=$('#cta');if(c)c.onclick=s.f||(()=>go(sec+1));
+}
+function go(n){sec=Math.max(0,Math.min(6,n));pi=sec===3?0:-1;ui()}
+addEventListener('wheel',e=>{const t=performance.now();if(t<lock||Math.abs(e.deltaY)<20)return;lock=t+900;go(sec+(e.deltaY>0?1:-1))},{passive:true});
+addEventListener('keydown',e=>{if(/Down|Right/.test(e.key))go(sec+1);if(/Up|Left/.test(e.key))go(sec-1)});
+let ty=0;addEventListener('touchstart',e=>ty=e.touches[0].clientY,{passive:true});
+addEventListener('touchend',e=>{const d=ty-e.changedTouches[0].clientY;if(Math.abs(d)>60&&!e.target.closest('button'))go(sec+(d>0?1:-1))});
+const ray=new THREE.Raycaster(),m2=new THREE.Vector2(),mouse={x:0,y:0};
+const up=o=>{while(o&&!(o.userData&&(o.userData.sp||o.userData.i!==undefined)))o=o.parent;return o};
+const pick=e=>{m2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(m2,C);
+ if(sec===4){const h=ray.intersectObjects(PG,true)[0];if(h)return{t:'p',i:up(h.object).userData.i}}
+ if(sec===3){const h=ray.intersectObjects(RG.children,true)[0];if(h&&h.object.userData.i!==undefined)return{t:'c',i:h.object.userData.i}}
+ if(sec===0&&ray.intersectObject(hit)[0])return{t:'w'};return null};
+addEventListener('pointermove',e=>{mouse.x=e.clientX/innerWidth-.5;mouse.y=e.clientY/innerHeight-.5;if(e.target.tagName==='CANVAS')document.body.style.cursor=pick(e)?'pointer':''});
+$('#c').addEventListener('click',e=>{const h=pick(e);if(!h)return;if(h.t==='w')go(1);else{pi=h.i;ui()}});
+
+const T=()=>{const k=Math.max(1,.95/C.aspect);let p,l,kk=k;
+ if(sec<=1)[p,l]=sec?[V(0,1.55,4.3),V(0,.7,.7)]:[V(0,1.9,9.5),V(0,1.8,0)];
+ else if(sec===2){if(pi<0)[p,l]=[V(KX+2.4,2.2,7.4),V(KX+.9,1.45,0)];else{const h=HS[pi],q=V(...h.p).add(KT.position),n=V(...h.n3);l=q;p=q.clone().add(n.multiplyScalar(3)).add(V(0,.4,0));kk=Math.min(k,1.4)}}
+ else if(sec===3)[p,l]=[V(CX,1.7,9.2),V(CX,1.45,3)];
+ else if(sec===4){if(pi<0)[p,l]=[V(PX(2),2,9.5),V(PX(2),.9,0)];else{[p,l]=[V(PX(pi)+.4,1.3,3.4),V(PX(pi),.95,0)];kk=Math.min(k,1.5)}}
+ else if(sec===5)[p,l]=[V(AX,1.7,6),V(AX,1.4,0)];else[p,l]=[V(TX,1.5,6.2),V(TX,1.3,0)];
+ return[l.clone().add(p.clone().sub(l).multiplyScalar(kk)),l]};
+let cp=V(0,2,12),cl2=V(0,1.8,0);
+function size(){R.setSize(innerWidth,innerHeight,false);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}
+addEventListener('resize',size);size();ui();
+const clock=new THREE.Clock(),pv=V();
+(function tick(){requestAnimationFrame(tick);
+ const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime,a=1-Math.pow(.02,dt);
+ const[tp,tl]=T();cp.lerp(tp,a);cl2.lerp(tl,a);
+ C.position.set(cp.x+mouse.x*.6,cp.y-mouse.y*.3+Math.sin(t*.4)*.04,cp.z);C.lookAt(cl2);
+ key.position.set(cl2.x+2,cl2.y+3,cl2.z+4.5);
+ D.position.z+=((sec===1?1.25:0)-D.position.z)*(1-Math.pow(.004,dt));
+ edges.forEach(e=>e.material.opacity+=((sec===1?.6+.4*Math.sin(t*2.2):0)-e.material.opacity)*.1);
+ PG.forEach((G,i)=>{G.userData.sp.rotation.y+=dt*(pi===i&&sec===4?.9:.35)});
+ rings.forEach((r,i)=>{r.rotation.x=t*(.3+i*.17);r.rotation.y=t*(.22+i*.11)});
+ let d=(sec===3?-pi/N*Math.PI*2:RG.rotation.y+dt*.1)-RG.rotation.y;RG.rotation.y+=Math.atan2(Math.sin(d),Math.cos(d))*(sec===3?a:1);
+ leaf.rotation.y=-1+Math.sin(t*.7)*.05;
+ HS.forEach(h=>{if(sec!==2){h.el.style.display='none';return}h.el.style.display='';pv.set(...h.p).add(KT.position).project(C);h.el.style.transform=`translate(${(pv.x*.5+.5)*innerWidth-17}px,${(-pv.y*.5+.5)*innerHeight-17}px)`});
+ R.render(S,C)})();
+</script>
+</body>
+</html>
