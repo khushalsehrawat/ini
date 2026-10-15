@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inox Decor — Kitchen Accessories in 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0b0c0e;--fg:#eceef0;--mut:#8b9097;--acc:#ffb86b;--line:#ffffff26;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{margin:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:Manrope,system-ui,sans-serif;font-weight:300}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+header{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:2}
+.logo{letter-spacing:.38em;font-weight:500;font-size:13px}.logo i{font-style:normal;color:var(--acc)}
+nav{display:flex;gap:6px;pointer-events:auto}
+nav button{background:none;border:0;color:var(--mut);font:inherit;font-size:11px;letter-spacing:.2em;text-transform:uppercase;padding:8px 10px;cursor:pointer;position:relative}
+nav button.on{color:var(--fg)}nav button.on:after{content:"";position:absolute;left:10px;right:10px;bottom:2px;height:1px;background:var(--acc)}
+#panel{position:fixed;left:28px;bottom:calc(46px + env(safe-area-inset-bottom,0px));max-width:480px;z-index:2;animation:in .9s both}
+@keyframes in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.k{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--acc);margin-bottom:14px}
+h1{font-weight:200;font-size:clamp(34px,5.6vw,68px);line-height:1.02;letter-spacing:-.02em}
+p{color:var(--mut);margin-top:16px;line-height:1.7;font-size:15px;max-width:400px}
+.row{display:flex;gap:28px;margin-top:22px}.row b{display:block;font-weight:200;font-size:30px;color:var(--fg)}.row span{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.btn{display:inline-block;margin-top:26px;padding:14px 26px;border:1px solid var(--line);border-radius:99px;color:var(--fg);background:#ffffff0a;font:inherit;font-size:11px;letter-spacing:.24em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:.3s}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+#chips{position:fixed;right:28px;bottom:calc(46px + env(safe-area-inset-bottom,0px));display:none;flex-direction:column;gap:2px;z-index:2;align-items:flex-end}
+#chips.show{display:flex}
+#chips button{background:none;border:0;color:var(--mut);font:inherit;font-size:12px;letter-spacing:.14em;padding:7px 0;cursor:pointer;display:flex;gap:12px;align-items:center}
+#chips button:after{content:"";width:18px;height:1px;background:var(--mut);transition:.3s}
+#chips button.on{color:var(--fg)}#chips button.on:after{width:44px;background:var(--acc)}
+#hint{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));text-align:center;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#6a6f76;pointer-events:none}
+@media(max-width:700px){header{padding:16px}nav button{padding:8px 5px;font-size:9px;letter-spacing:.1em}.logo{display:none}
+#panel{left:18px;right:18px;bottom:calc(150px + env(safe-area-inset-bottom,0px))}#chips{left:18px;right:18px;bottom:calc(40px + env(safe-area-inset-bottom,0px));flex-direction:row;flex-wrap:wrap;justify-content:flex-start;gap:4px 14px}
+#chips button:after{display:none}#chips button{font-size:11px;padding:4px 0}p{font-size:14px}}
+.hs{position:fixed;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:1px solid #ffffff55;background:linear-gradient(135deg,#a8561a,#6e3510);color:#fff;font:500 13px Manrope,sans-serif;cursor:pointer;pointer-events:auto;animation:pl 2s infinite;transition:transform .3s}
+.hs.on{background:linear-gradient(135deg,#ffd9a0,#ff9a5c);color:#2a1305;transform:scale(1.25)}
+@keyframes pl{0%{box-shadow:0 0 0 0 #ff9a5c99}70%,100%{box-shadow:0 0 0 14px #ff9a5c00}}
+#hs{position:fixed;inset:0;pointer-events:none;z-index:1;display:none}
+#vg{position:fixed;inset:0;pointer-events:none;z-index:1;mix-blend-mode:screen;background:radial-gradient(60% 55% at 12% 105%,color-mix(in srgb,var(--acc) 26%,transparent),transparent 70%),radial-gradient(50% 45% at 100% 0%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 70%)}
+nav{overflow-x:auto;max-width:100%}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<header><div class="logo">INOX<i>DECOR</i></div><nav id="nav"></nav></header>
+<div id="panel"></div>
+<div id="vg"></div><div id="hs"></div><div id="chips"></div>
+<div id="hint">Scroll · Click · Explore</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),V=(...a)=>new THREE.Vector3(...a);
+const R=new THREE.WebGLRenderer({canvas:$('#c'),antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.15;
+const S=new THREE.Scene();S.background=new THREE.Color(0x0b0c0e);S.fog=new THREE.Fog(0x0b0c0e,14,46);
+const C=new THREE.PerspectiveCamera(40,1,.1,100);
+
+// procedural studio environment for steel reflections
+const ec=document.createElement('canvas');ec.width=1024;ec.height=512;const g=ec.getContext('2d');
+const gr=g.createLinearGradient(0,0,0,512);gr.addColorStop(0,'#2c3037');gr.addColorStop(.5,'#0e0f12');gr.addColorStop(1,'#050506');
+g.fillStyle=gr;g.fillRect(0,0,1024,512);g.fillStyle='#fff';
+[[90,70,180,36],[420,50,240,28],[760,90,150,48],[260,190,90,16],[600,170,60,14]].forEach(r=>g.fillRect(...r));
+const et=new THREE.CanvasTexture(ec);et.mapping=THREE.EquirectangularReflectionMapping;
+S.environment=new THREE.PMREMGenerator(R).fromEquirectangular(et).texture;
+
+S.add(new THREE.HemisphereLight(0x9aa6b8,0x101114,.55));
+const key=new THREE.PointLight(0xfff1dd,1.6,16,1.6);S.add(key);
+
+const steel=new THREE.MeshStandardMaterial({color:0xd2d6db,metalness:1,roughness:.26});
+const dark=new THREE.MeshStandardMaterial({color:0x191b1f,metalness:.3,roughness:.6});
+const fac=new THREE.MeshStandardMaterial({color:0x2a2d33,metalness:.55,roughness:.38});
+const warm=new THREE.MeshBasicMaterial({color:0xffe2b0});
+const box=(w,h,d,m,x,y,z,p)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);p&&p.add(o);return o};
+const cyl=(r,h,m,x,y,z,p,s=40)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,s),m);o.position.set(x,y,z);p&&p.add(o);return o};
+const rod=(a,b,p,r=.008)=>{a=V(...a);b=V(...b);const d=b.clone().sub(a),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),6),steel);o.position.copy(a).add(b).multiplyScalar(.5);o.quaternion.setFromUnitVectors(V(0,1,0),d.normalize());p.add(o)};
+
+// floor + wall
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(200,60),new THREE.MeshStandardMaterial({color:0x101114,metalness:.7,roughness:.32}));
+fl.rotation.x=-Math.PI/2;S.add(fl);
+box(14,7,.1,new THREE.MeshStandardMaterial({color:0x131518,roughness:.9}),0,3.5,-.7,S);
+
+// ---------- 01 KITCHEN WALL ----------
+const K=new THREE.Group();S.add(K);
+box(5.7,3.7,.1,dark,0,1.85,-.5,K);
+[-2.82,2.82].forEach(x=>box(.06,3.7,1.05,dark,x,1.85,0,K));
+box(5.7,.06,1.05,dark,0,3.7,0,K);box(5.7,.1,1,dark,0,.05,-.02,K);
+const edges=[];
+const mkEdge=(mesh)=>{const l=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry),new THREE.LineBasicMaterial({color:0xffb86b,transparent:true,opacity:0}));mesh.add(l);edges.push(l)};
+[-1.88,0,1.88].forEach(x=>{
+  box(1.8,2.5,.04,fac,x,2.4,.52,K);
+  box(1.8,.015,.05,steel,x,1.17,.54,K);
+});
+const doorEdge=box(1,1,1,fac,0,0,0);
+// drawers: left & right static, centre opens
+const drawer=(x,open)=>{const D=new THREE.Group();D.position.x=x;K.add(D);
+  const f=box(1.8,.86,.04,fac,0,.6,.52,D);box(1.8,.015,.05,steel,0,1.02,.54,D);
+  box(1.6,.03,.95,steel,0,.25,.04,D);
+  [-.8,.8].forEach(s=>box(.03,.5,.95,steel,s,.5,.04,D));box(1.6,.5,.03,steel,0,.5,-.43,D);
+  // cutlery tray content
+  for(let i=0;i<5;i++)cyl(.045,.34,steel,-.55+i*.27,.43,-.2,D,24);
+  box(.5,.06,.3,dark,.4,.3,.25,D);cyl(.16,.03,steel,-.35,.3,.28,D);
+  if(open){mkEdge(f)}
+  return D};
+drawer(-1.88);drawer(1.88);const D=drawer(0,true);
+box(.001,.001,.001,dark,0,0,0,K);
+const hit=box(5.6,3.6,.1,new THREE.MeshBasicMaterial({visible:false}),0,1.8,.6,K);hit.userData.wall=1;
+
+// ---------- 02 PRODUCTS ----------
+const PX=i=>12+i*3.3;
+const prods=[
+ {n:'Magic Corner Unit',d:'Universal and 4-shelf stainless steel corner carousels that reclaim every blind corner.',b(p){
+   cyl(.035,1.45,steel,0,.75,0,p);[.2,.55,.9,1.25].forEach(y=>{cyl(.52,.025,steel,0,y,0,p,64);const t=new THREE.Mesh(new THREE.TorusGeometry(.52,.012,8,64),steel);t.rotation.x=Math.PI/2;t.position.y=y+.03;p.add(t)})}},
+ {n:'Stainless Steel Baskets',d:'Polished stainless baskets and cabinet organizers, built for daily load.',b(p){p.position.y=.1;
+   for(let i=0;i<7;i++){const x=-.45+i*.15;rod([x,0,-.3],[x,0,.3],p)}
+   for(let j=0;j<5;j++){const z=-.3+j*.15;rod([-.45,0,z],[.45,0,z],p)}
+   [[-.45,-.3],[.45,-.3],[.45,.3],[-.45,.3]].forEach(([x,z])=>rod([x,0,z],[x,.38,z],p,.012));
+   [0,.19,.38].forEach(y=>{rod([-.45,y,-.3],[.45,y,-.3],p);rod([-.45,y,.3],[.45,y,.3],p);rod([-.45,y,-.3],[-.45,y,.3],p);rod([.45,y,-.3],[.45,y,.3],p)})}},
+ {n:'Hinges & Slides',d:'Stainless steel hinge and slide series, plus sliding-door fittings.',b(p){
+   const h=new THREE.Group();p.add(h);h.position.set(0,.85,0);
+   cyl(.17,.07,steel,-.3,0,0,h);box(.55,.03,.12,steel,.05,.02,0,h);box(.3,.04,.2,steel,.4,0,0,h);cyl(.05,.2,steel,.15,.04,0,h,24).rotation.x=Math.PI/2;
+   const s=new THREE.Group();p.add(s);s.position.set(0,.35,0);
+   box(1.2,.04,.06,steel,0,0,0,s);box(.9,.04,.06,steel,.15,.05,.06,s);[-.3,0,.3,.6].forEach(x=>cyl(.015,.05,dark,x,.025,.03,s,12));}},
+ {n:'Aluminium Cabinets & Doors',d:'Aluminium profile cabinets and doors for fully-loaded modern kitchens.',b(p){
+   const y=.95;box(.84,.04,.05,steel,0,y+.6,0,p);box(.84,.04,.05,steel,0,y-.6,0,p);box(.04,1.24,.05,steel,-.4,y,0,p);box(.04,1.24,.05,steel,.4,y,0,p);
+   box(.76,1.16,.01,new THREE.MeshStandardMaterial({color:0x8fb7c9,transparent:true,opacity:.28,metalness:.2,roughness:.05}),0,y,0,p);
+   box(.02,.5,.04,steel,.3,y,.04,p)}},
+ {n:'Cabinet Lighting',d:'Slim, warm light lines that finish every shelf, niche and corner.',b(p){
+   box(1.2,.04,.07,steel,0,1.35,0,p);box(1.14,.01,.045,warm,0,1.325,0,p);
+   const c=new THREE.Mesh(new THREE.CylinderGeometry(.6,.05,.95,32,1,true),new THREE.MeshBasicMaterial({color:0xffd9a0,transparent:true,opacity:.07,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false}));c.scale.z=.3;c.position.y=.85;p.add(c);
+   const l=new THREE.PointLight(0xffd9a0,1.1,4);l.position.set(0,1.1,.3);p.add(l)}}
+];
+const PG=prods.map((pr,i)=>{const G=new THREE.Group();G.position.set(PX(i),0,0);S.add(G);
+  cyl(.75,.5,dark,0,.25,0,G,64);cyl(.76,.02,steel,0,.5,0,G,64);
+  const sp=new THREE.Group();sp.position.y=.52;G.add(sp);pr.b(sp);G.userData={i,sp};return G});
+
+// ---------- 03 ABOUT ----------
+const AB=new THREE.Group();AB.position.set(34,1.45,0);S.add(AB);
+const rings=[1.05,.82,.6].map((r,i)=>{const t=new THREE.Mesh(new THREE.TorusGeometry(r,.03,24,128),steel);AB.add(t);return t});
+cyl(.05,.05,warm,0,0,0,AB);AB.add(new THREE.Mesh(new THREE.SphereGeometry(.1,24,24),warm));
+const apl=new THREE.PointLight(0xffd9a0,.8,5);AB.add(apl);
+
+// ---------- 04 CONTACT ----------
+const CT=new THREE.Group();CT.position.set(46,0,0);S.add(CT);
+box(1.5,.08,.1,steel,0,2.7,0,CT);[-.7,.7].forEach(x=>box(.08,2.7,.1,steel,x,1.35,0,CT));
+box(1.32,2.62,.02,warm,0,1.31,-.15,CT);
+const leaf=new THREE.Group();leaf.position.set(-.66,0,0);CT.add(leaf);box(1.28,2.6,.05,fac,.64,1.3,0,leaf);box(.02,.5,.07,steel,1.15,1.3,.04,leaf);leaf.rotation.y=-1.0;
+const cl=new THREE.PointLight(0xffd9a0,2.2,9);cl.position.set(0,1.4,1.2);CT.add(cl);
+// floor glow
+const glow=new THREE.Mesh(new THREE.PlaneGeometry(2.2,3),new THREE.MeshBasicMaterial({color:0xffc880,transparent:true,opacity:.14,blending:THREE.AdditiveBlending,depthWrite:false}));
+glow.rotation.x=-Math.PI/2;glow.position.set(0,.01,1.4);CT.add(glow);
+
+// ---------- KITCHEN (numbered hotspots) ----------
+const KT=new THREE.Group();KT.position.x=58;S.add(KT);
+const fac2=new THREE.MeshStandardMaterial({color:0xd9d2c4,roughness:.55,metalness:.05});
+const blk=new THREE.MeshStandardMaterial({color:0x0c0c0d,roughness:.4,metalness:.6});
+const marble=new THREE.MeshStandardMaterial({color:0xece6da,roughness:.22,metalness:.1});
+box(12,.01,6,new THREE.MeshStandardMaterial({color:0x2d2823,roughness:.3,metalness:.3}),1,.006,1,KT);
+box(12,4.6,.1,new THREE.MeshStandardMaterial({color:0x4a4036,roughness:.85}),1,2.3,-.62,KT);
+box(8,.88,.55,dark,0,.47,-.2,KT);box(2,3.3,.6,dark,5,1.65,-.15,KT);box(8,.9,.35,dark,0,2.5,-.3,KT);
+box(8.1,.05,.64,marble,0,.93,-.17,KT);
+for(let i=0;i<8;i++){const x=-3.5+i;
+ if(i<3){[.68,.23].forEach(y=>box(.96,.42,.03,fac2,x,y,.12,KT));box(.9,.012,.04,blk,x,.88,.14,KT);box(.9,.012,.04,blk,x,.44,.14,KT)}
+ else if(i===5){box(1.96,.26,.03,fac2,2,.78,.12,KT);box(1.96,.56,.03,fac2,2,.3,.12,KT);box(1.9,.012,.04,blk,2,.9,.14,KT);box(1.9,.012,.04,blk,2,.58,.14,KT)}
+ else if(i!==6){box(.96,.84,.03,fac2,x,.46,.12,KT);box(.012,.4,.04,blk,x+.43,.7,.14,KT)}
+ if(i===2){box(.9,.02,.3,warm,x,2.5,-.2,KT);cyl(.07,.2,steel,x,2.62,-.2,KT,20);cyl(.08,.14,blk,x+.25,2.57,-.2,KT,20)}
+ else if(i!==5&&i!==6){box(.96,.9,.03,fac2,x,2.5,-.1,KT);box(.012,.4,.04,blk,x+.43,2.2,-.08,KT)}}
+[4.5,5.5].forEach(x=>box(.98,3.2,.03,fac2,x,1.7,.15,KT));
+box(1.1,.02,.5,blk,2,.96,-.17,KT);box(1.4,.12,.5,blk,2,2.05,-.25,KT);box(8,.015,.05,warm,0,2.03,-.12,KT);
+const kl=new THREE.PointLight(0xffd9a0,1.4,10);kl.position.set(0,1.6,1.8);KT.add(kl);
+const HS=[
+{n:'Silent Drawer Systems',d:'Soft-close runners for a whisper-quiet, full-extension pull.',p:[-3.5,.68,.2]},
+{n:'Cabinet Hardware',d:'Profile handles and everyday fittings in black and steel.',p:[-3.5,.23,.2]},
+{n:'Hinges & Telescopic',d:'Stainless hinges and channels for doors that close true, year after year.',p:[-2.5,.46,.2]},
+{n:'Satin X Series',d:'The satin-finish series for architectural, premium cabinetry.',p:[-.5,.46,.2]},
+{n:'Sliding Systems',d:'Smooth sliding gear for doors, panels and pantries.',p:[.5,.46,.2]},
+{n:'Aluminium Carcass Kitchen',d:'A moisture-proof aluminium structure behind every facade.',p:[2,.3,.2]},
+{n:'Modular Kitchen',d:'Complete modular kitchens, planned and fitted end to end.',p:[3.5,.46,.2]},
+{n:'Wardrobe & Tall Fittings',d:'Pull-outs, rails and organizers for full-height storage.',p:[5,1.7,.25]},
+{n:'Overhead Organizers',d:'Lift-down racks and wall-cabinet organizers within easy reach.',p:[-.5,2.5,0]}];
+
+// ---------- FEATURED CATEGORIES (3D ring) ----------
+const CAT=[['Wardrobe Fittings','Rails, pull-outs and organizers for wardrobes.'],['Sliding Systems','Smooth sliding gear for doors and wardrobes.'],['Silent Drawer Systems','Soft-close drawer runners with a quiet, full glide.'],['Satin X Series','Satin-finish series for premium cabinetry.'],['Modular Kitchen','Complete kitchens, planned and fitted modularly.'],['Rolling Shutters','Roll-up shutters that tuck away appliance and pantry zones.'],['Cabinet Hardware','Handles, profiles and everyday fittings.'],['Overhead Organizers','Lift-down racks for wall cabinets.'],['Hinges & Telescopic','Stainless steel hinges and telescopic channels.'],['Aluminium Carcass Kitchen','Moisture-proof aluminium cabinet structures.'],['Architectural Fittings','Premium fittings for architectural interiors.']];
+const CR=new THREE.Group();CR.position.set(84,1.6,0);S.add(CR);
+const NC=CAT.length,RR=3.9;
+CAT.forEach((c,i)=>{const cv=document.createElement('canvas');cv.width=512;cv.height=320;const x=cv.getContext('2d'),h=(i*33+210)%360;
+ const gg=x.createLinearGradient(0,0,512,320);gg.addColorStop(0,`hsl(${h},38%,26%)`);gg.addColorStop(1,`hsl(${h+45},45%,8%)`);x.fillStyle=gg;x.fillRect(0,0,512,320);
+ x.strokeStyle='#ffffff30';x.strokeRect(14,14,484,292);x.fillStyle='#ffffff99';x.font='300 24px sans-serif';x.fillText(String(i+1).padStart(2,'0'),38,70);
+ x.fillStyle='#fff';x.font='300 40px sans-serif';let line='',y=170;c[0].split(' ').forEach(w=>{if(x.measureText(line+w).width>420){x.fillText(line,38,y);line='';y+=48}line+=w+' '});x.fillText(line,38,y);
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(1.8,1.125),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),side:THREE.DoubleSide}));
+ const a=i/NC*Math.PI*2;m.position.set(Math.sin(a)*RR,0,Math.cos(a)*RR);m.rotation.y=a;m.userData.i=i;CR.add(m)});
+
+// ---------- UI ----------
+const ORD=[0,1,5,6,2,7,3,4],NAMES=['Home','Drawer','Facade','Kitchen','Products','Systems','About','Contact'];
+const ACC=['#ffb86b','#ffb86b','#9fd0ff','#c9a7ff','#ffb86b','#8fe0b8','#ff9a5c','#7fb2ff'];
+const TINT=[0x0b0c0e,0x0c1018,0x0d1114,0x100d16,0x16100b,0x0f1212,0x15110d,0x0b0f17].map(c=>new THREE.Color(c));
+const FIN=[{n:'Matte Ivory',c:0xd8d0c2,r:.6,m:.05,d:'Soft, warm and calm — the quiet classic.'},{n:'Graphite',c:0x2a2d33,r:.38,m:.55,d:'Deep metallic charcoal with a refined sheen.'},{n:'Walnut',c:0x6b4a32,r:.55,m:.08,d:'Rich timber warmth for a natural kitchen.'},{n:'Sage',c:0x7d8b78,r:.5,m:.08,d:'A muted green that sits easily with steel.'},{n:'Champagne Metal',c:0xc8a97e,r:.28,m:.9,d:'Brushed champagne metal for statement facades.'},{n:'Pearl White',c:0xf1f1ee,r:.15,m:.05,d:'High-gloss pearl that lifts every light.'}];
+const SEC=[
+{k:'Inox Decor · New Delhi · Since 2000',h:'Kitchens,<br>engineered in steel.',p:'Manufacturer and wholesaler of kitchen accessories, stainless steel hinges and cabinet hardware.',b:'Open the drawer'},
+{k:'Silent Drawer Systems',h:'Every drawer,<br>a precision system.',p:'Stainless baskets, magic corners and organizers — the engineering behind a clean facade.',b:'Choose a facade'},
+null,
+{k:'About Inox Decor',h:'Built on steel<br>since 2000.',p:'A New Delhi manufacturer and wholesale trader of stainless steel hinges, kitchen hardware and aluminium cabinetry, supplying fabricators, designers and kitchen makers.',p2:'Precision, durability and clean design guide everything we make and stock.',row:[['2000','Established'],['11','Categories'],['29+','Kitchen items'],['26–50','Team']],b:'Get in touch'},
+{k:'Contact',h:'Step into<br>your kitchen.',p:'B-1 1/2, Main Najafgarh Road, Janakpuri,<br>New Delhi 110058<br>Mon – Sat · 9 AM – 7 PM',b:'Call +91 80438 48491',href:'tel:+918043848491'}];
+let sec=0,pi=-1,fi=1,hi=-1,ci=-1,lock=0;
+const nav=$('#nav'),chips=$('#chips'),panel=$('#panel'),hsEl=$('#hs'),hsB=[];
+NAMES.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>go(ORD[i]);nav.appendChild(b)});
+HS.forEach((h,i)=>{const b=document.createElement('button');b.className='hs';b.textContent=i+1;b.onclick=()=>{hi=hi===i?-1:i;ui()};hsEl.appendChild(b);hsB.push(b)});
+const pad=n=>String(n).padStart(2,'0');
+function ui(){
+  document.documentElement.style.setProperty('--acc',ACC[sec]);
+  [...nav.children].forEach((b,i)=>b.classList.toggle('on',ORD[i]===sec));
+  let s=SEC[sec];
+  if(sec===2)s=pi<0?{k:'Featured Products',h:'Five systems.<br>One standard.',p:'Select an object — or click it in the scene.'}:{k:`${pad(pi+1)} / 05`,h:prods[pi].n,p:prods[pi].d,b:'Enquire',href:'tel:+918043848491'};
+  if(sec===5)s={k:'Facade · Finish',h:FIN[fi].n,p:FIN[fi].d+' Pick a finish — the whole wall and kitchen update live.',b:'See it in a kitchen',go:6};
+  if(sec===6)s=hi<0?{k:'Interactive Kitchen',h:'Tap a number.',p:'Nine hotspots show which Inox system sits behind each part of the kitchen.'}:{k:`${pad(hi+1)} / 09`,h:HS[hi].n,p:HS[hi].d,b:'Enquire',href:'tel:+918043848491'};
+  if(sec===7)s=ci<0?{k:'Featured Categories',h:'Eleven systems.<br>Every detail.',p:'Pick a category from the list, or click a panel in the ring.'}:{k:`${pad(ci+1)} / 11`,h:CAT[ci][0],p:CAT[ci][1],b:'Enquire',href:'tel:+918043848491'};
+  const L=sec===2?prods.map(p=>p.n):sec===5?FIN.map(f=>f.n):sec===7?CAT.map(c=>c[0]):[],cur=sec===2?pi:sec===5?fi:ci;
+  chips.innerHTML='';L.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.className=i===cur?'on':'';b.onclick=()=>sel(i);chips.appendChild(b)});
+  chips.classList.toggle('show',L.length>0);hsEl.style.display=sec===6?'block':'none';hsB.forEach((b,i)=>b.classList.toggle('on',i===hi));
+  panel.style.animation='none';panel.offsetHeight;panel.style.animation='';
+  panel.innerHTML=`<div class="k">${s.k}</div><h1>${s.h}</h1><p>${s.p}</p>${s.p2?`<p>${s.p2}</p>`:''}${s.row?`<div class="row">${s.row.map(r=>`<div><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')}</div>`:''}${s.b?(s.href?`<a class="btn" href="${s.href}">${s.b}</a>`:`<button class="btn" id="cta">${s.b}</button>`):''}`;
+  const c=$('#cta');if(c)c.onclick=()=>s.go!=null?go(s.go):step(1);
+}
+function applyFin(){const f=FIN[fi];[fac,fac2].forEach(m=>{m.color.set(f.c);m.roughness=f.r;m.metalness=f.m})}
+function sel(i){if(sec===2)pi=pi===i?-1:i;else if(sec===5){fi=i;applyFin()}else if(sec===7)ci=ci===i?-1:i;ui()}
+function go(id){sec=id;pi=-1;hi=-1;ui()}
+function step(d){go(ORD[Math.max(0,Math.min(7,ORD.indexOf(sec)+d))])}
+addEventListener('wheel',e=>{const t=performance.now();if(t<lock||Math.abs(e.deltaY)<20)return;lock=t+900;step(e.deltaY>0?1:-1)},{passive:true});
+addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowRight')step(1);if(e.key==='ArrowUp'||e.key==='ArrowLeft')step(-1)});
+let ty=0;addEventListener('touchstart',e=>ty=e.touches[0].clientY,{passive:true});
+addEventListener('touchend',e=>{const d=ty-e.changedTouches[0].clientY;if(Math.abs(d)>60)step(d>0?1:-1)});
+const ray=new THREE.Raycaster(),m2=new THREE.Vector2(),mouse={x:0,y:0};
+const hitTest=e=>{m2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(m2,C);
+  if(sec===2){const h=ray.intersectObjects(PG,true)[0];if(h){let o=h.object;while(o&&!o.userData.sp)o=o.parent;return{p:o.userData.i}}}
+  if(sec===7){const h=ray.intersectObjects(CR.children)[0];if(h)return{c:h.object.userData.i}}
+  if(sec===0&&ray.intersectObject(hit)[0])return{wall:1};return null};
+addEventListener('pointermove',e=>{mouse.x=e.clientX/innerWidth-.5;mouse.y=e.clientY/innerHeight-.5;if(e.target.tagName==='CANVAS')document.body.style.cursor=hitTest(e)?'pointer':''});
+$('#c').addEventListener('click',e=>{const h=hitTest(e);if(!h)return;if(h.wall)go(1);else if(h.p!=null){pi=h.p;ui()}else if(h.c!=null){ci=h.c;ui()}});
+
+// ---------- loop ----------
+const P={0:[[0,1.9,9.5],[0,1.8,0]],1:[[0,1.55,4.3],[0,.7,.7]],3:[[34,1.7,6],[34,1.4,0]],4:[[46,1.5,6.2],[46,1.3,0]],5:[[-1.4,1.9,7.5],[-1.4,1.8,0]],6:[[59,1.7,8.2],[59,1.5,0]],7:[[84,1.9,9.9],[84,1.6,3]]};
+const T=()=>{const k=Math.max(1,.95/C.aspect);let p,l;
+  if(sec===2)[p,l]=pi<0?[V(PX(2),2,9.5),V(PX(2),.9,0)]:[V(PX(pi)+.4,1.3,3.4),V(PX(pi),.95,0)];
+  else[p,l]=[V(...P[sec][0]),V(...P[sec][1])];
+  return[l.clone().add(p.clone().sub(l).multiplyScalar(sec===2&&pi>=0?Math.min(k,1.5):k)),l]};
+let cp=V(0,2,12),cl2=V(0,1.8,0);
+function size(){R.setSize(innerWidth,innerHeight,false);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}
+addEventListener('resize',size);size();ui();
+const clock=new THREE.Clock();
+(function tick(){requestAnimationFrame(tick);
+  const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime,a=1-Math.pow(.02,dt);
+  const [tp,tl]=T();cp.lerp(tp,a);cl2.lerp(tl,a);
+  C.position.set(cp.x+mouse.x*.7,cp.y-mouse.y*.35+Math.sin(t*.4)*.04,cp.z);C.lookAt(cl2);
+  key.position.set(cl2.x+2,cl2.y+3,cl2.z+4.5);
+  S.background.lerp(TINT[sec],a*.6);S.fog.color.copy(S.background);
+  D.position.z+=((sec===1?1.25:0)-D.position.z)*(1-Math.pow(.004,dt));
+  edges.forEach(e=>e.material.opacity+=((sec===1?.5+.5*Math.sin(t*2.2):0)-e.material.opacity)*.1);
+  PG.forEach((G,i)=>{G.userData.sp.rotation.y+=dt*(pi===i?.9:.35);G.userData.sp.position.y=.52+(pi===i?Math.sin(t*1.6)*.03:0)});
+  rings.forEach((r,i)=>{r.rotation.x=t*(.3+i*.17);r.rotation.y=t*(.22+i*.11)});
+  leaf.rotation.y=-1+(sec===4?-.15:0)+Math.sin(t*.7)*.05;
+  if(ci<0)CR.rotation.y+=dt*.15;else{const g=-ci*Math.PI*2/NC,d=((g-CR.rotation.y+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;CR.rotation.y+=d*a}
+  CR.children.forEach(m=>{const s=m.scale.x+((m.userData.i===ci?1.18:1)-m.scale.x)*.12;m.scale.set(s,s,1)});
+  if(sec===6)HS.forEach((h,i)=>{const v=V(h.p[0]+58,h.p[1],h.p[2]).project(C);hsB[i].style.left=(v.x*.5+.5)*innerWidth+'px';hsB[i].style.top=(-v.y*.5+.5)*innerHeight+'px'});
+  R.render(S,C)})();
+</script>
+</body>
+</html>
