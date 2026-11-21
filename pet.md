@@ -1,3 +1,6 @@
+
+Develop & Maintained by - www.thebenzzcreations.com
+
 ---
 name: pets
 description: "List, inspect, select, download, or delete animated pets in ChatGPT Work mode. Use for an explicit pet in ChatGPT or established ChatGPT Pets context. Exclude real-world and other-app pets; clarify before invoking."
