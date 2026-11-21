@@ -1,5 +1,7 @@
 # APP explain — INOX, from your first line of JavaScript to the complete app
 
+Develop & Maintained by - www.thebenzzcreations.com
+
 > A beginner's handbook for this repository. Read from top to bottom if you have never used Node.js, React, or React Native. Use the contents and file atlas when you return to make a change.
 >
 > Repository snapshot: **15 October 2026**. This document describes the code that exists, including its unfinished parts. Examples marked **learning example** explain an idea; they are not changes made to the application.
